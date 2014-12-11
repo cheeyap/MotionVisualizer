@@ -30,29 +30,33 @@ int main(int argc, char** argv)
 	std::cout << "------------MotionCalculator-----------" << std::endl;
 	std::cout << "Tyler" << std::endl;
 	
-	std::cout << "1.Euler Angle" << std::endl;
+	std::cout << "Rotation R (Euler Angle)" << std::endl;
 	Eigen::Matrix3f R_x; R_x = Eigen::AngleAxisf(M_PI/2, Eigen::Vector3f::UnitX());
 	Eigen::Matrix3f R_y; R_y = Eigen::AngleAxisf(M_PI/2, Eigen::Vector3f::UnitY());
 	Eigen::Matrix3f R_z; R_z = Eigen::AngleAxisf(M_PI/2, Eigen::Vector3f::UnitZ());
 	Eigen::Matrix3f R = R_x*R_y*R_z;
 	std::cout << R << std::endl;
 
-	std::cout << "Translation" << std::endl;
-	Eigen::Vector3f T; T << 1, 2, 3;
-	std::cout << T << std::endl;
+	std::cout << "Translation t" << std::endl;
+	Eigen::Vector3f t; t << 1, 2, 3;
+	std::cout << t << std::endl;
 
-	std::cout << "Transform" << std::endl;
+	std::cout << "Transform M" << std::endl;
 	Eigen::Matrix4f M; M.setZero();
 	std::cout << M << std::endl;
 	M.block<3, 3>(0, 0) = R;
-	M.block<3, 1>(0, 3) = T;
+	M.block<3, 1>(0, 3) = t;
 	M(3, 3) = 1;
 	std::cout << M << std::endl;
 
-	std::cout << "Transform Chain" << std::endl;
-	Eigen::Matrix4f M10; M10.setZero();
-	Eigen::Matrix4f M21; M21.setZero();
-	Eigen::Matrix4f M32; M32.setZero();
+	std::cout << "Transform Chain M0 M1 M2" << std::endl;
+	Eigen::Matrix4f M0; M0.setZero();
+	Eigen::Matrix4f M1; M1.setZero();
+	Eigen::Matrix4f M2; M2.setZero();
+
+	Eigen::Matrix4f M10; M10 = M0;
+	Eigen::Matrix4f M21; M21 = M1;
+	Eigen::Matrix4f M32; M32 = M2;
 	Eigen::Matrix4f M30; M30 = M10*M21*M32;
 
 	int wait;
