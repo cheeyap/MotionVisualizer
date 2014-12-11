@@ -36,9 +36,16 @@ int main(int argc, char** argv)
 	Eigen::Matrix3f R_y; R_y = Eigen::AngleAxisf(M_PI/2, Eigen::Vector3f::UnitY());
 	Eigen::Matrix3f R_z; R_z = Eigen::AngleAxisf(M_PI/2, Eigen::Vector3f::UnitZ());
 
-
+	Eigen::Vector3f T; T << 1, 2, 3;
+	std::cout << T << std::endl;
 	Eigen::Matrix3f R = R_x*R_y*R_z;
 	std::cout << R << std::endl;
+	Eigen::Matrix4f M; M.setZero();
+	std::cout << M << std::endl;
+	M.block<3, 3>(0, 0) = R;
+	M.block<3, 1>(0, 3) = T;
+	M(3, 3) = 1;
+	std::cout << M << std::endl;
 
 	int wait;
 	std::cin >> wait;
