@@ -31,21 +31,29 @@ int main(int argc, char** argv)
 	std::cout << "Tyler" << std::endl;
 	
 	std::cout << "1.Euler Angle" << std::endl;
-
 	Eigen::Matrix3f R_x; R_x = Eigen::AngleAxisf(M_PI/2, Eigen::Vector3f::UnitX());
 	Eigen::Matrix3f R_y; R_y = Eigen::AngleAxisf(M_PI/2, Eigen::Vector3f::UnitY());
 	Eigen::Matrix3f R_z; R_z = Eigen::AngleAxisf(M_PI/2, Eigen::Vector3f::UnitZ());
-
-	Eigen::Vector3f T; T << 1, 2, 3;
-	std::cout << T << std::endl;
 	Eigen::Matrix3f R = R_x*R_y*R_z;
 	std::cout << R << std::endl;
+
+	std::cout << "Translation" << std::endl;
+	Eigen::Vector3f T; T << 1, 2, 3;
+	std::cout << T << std::endl;
+
+	std::cout << "Transform" << std::endl;
 	Eigen::Matrix4f M; M.setZero();
 	std::cout << M << std::endl;
 	M.block<3, 3>(0, 0) = R;
 	M.block<3, 1>(0, 3) = T;
 	M(3, 3) = 1;
 	std::cout << M << std::endl;
+
+	std::cout << "Transform Chain" << std::endl;
+	Eigen::Matrix4f M10; M10.setZero();
+	Eigen::Matrix4f M21; M21.setZero();
+	Eigen::Matrix4f M32; M32.setZero();
+	Eigen::Matrix4f M30; M30 = M10*M21*M32;
 
 	int wait;
 	std::cin >> wait;
