@@ -131,7 +131,8 @@ int main(int argc, char** argv)
 		int j = 0;
 		for (auto p : photos[i])
 		{
-			// error
+			// error: U-U0
+                        ProjectedPoint U0 = cameras[i].project(p);
 			ProjectedPoint U = perturbed_cameras[i].project(p);
 
 			// calculate dUdt1
@@ -144,7 +145,7 @@ int main(int argc, char** argv)
 			C_dt2.position += Translation(0.0f, 0.01f);
 			float dU_t2 = C_dt2.project(p)-U;
 
-			E(j) = U;
+			E(j) = U-U0;
 			J(j, 0) = dU_t1 / 0.01;
 			J(j, 1) = dU_t2 / 0.01;
 			j++;
