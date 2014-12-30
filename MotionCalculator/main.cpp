@@ -7,6 +7,7 @@
 #include <algorithm>
 
 
+
 // overload
 float* GLMatFromEigenMat(Eigen::Matrix3f &mat)
 {
@@ -30,8 +31,14 @@ float* GLMatFromEigenMat(Eigen::Matrix4f &mat)
 }
 
 
+typedef std::vector<std::vector<Eigen::Vector2f>> Trajectories;
+
 int main(int argc, char** argv)
 {
+	Trajectories t;
+	std::vector<Eigen::Vector2f> pointsInFrame; pointsInFrame.push_back(Eigen::Vector2f(2.0f, 2.00f));
+	t.push_back(pointsInFrame);
+
 	std::cout << "------------MotionCalculator--------------------------" << std::endl;
 
 	/*
@@ -105,7 +112,7 @@ int main(int argc, char** argv)
 		k = k+1;
 	}
 	{{
-		std::cout << "Pertubed Points" << std::endl;
+		std::cout << "Perturb Points" << std::endl;
 		for (int i = 0; i < perturbedPoints.size();i++)
 		{
 			auto p = perturbedPoints[i];
@@ -135,15 +142,15 @@ int main(int argc, char** argv)
 	*/
 
 	// perturbation cameras' position
-	Translation perturbation(0, 1);
+	Translation perturbation(0, 0);
 	std::vector<Camera> perturbed_cameras;
-	perturbed_cameras.push_back(Camera(Point(-20, -20)+cameraTranslation+Translation(1,2)));
-	perturbed_cameras.push_back(Camera(Point(-10, -20) + cameraTranslation + Translation(-1, 1)));
-	perturbed_cameras.push_back(Camera(Point(0, -10) + cameraTranslation + Translation(3, 1)));
-	perturbed_cameras.push_back(Camera(Point(10, -10) + cameraTranslation + Translation(2, -2)));
-	perturbed_cameras.push_back(Camera(Point(20, -0) + cameraTranslation + Translation(-1, 2)));
+	perturbed_cameras.push_back(Camera(Point(-20, -20)+cameraTranslation+Translation(2,1)));
+	perturbed_cameras.push_back(Camera(Point(-10, -20) + cameraTranslation + Translation(-1, 0)));
+	perturbed_cameras.push_back(Camera(Point(0, -10) + cameraTranslation + Translation(1, -1)));
+	perturbed_cameras.push_back(Camera(Point(10, -10) + cameraTranslation + Translation(3, 2)));
+	perturbed_cameras.push_back(Camera(Point(20, -0) + cameraTranslation + Translation(-2, 1)));
 	{{
-		std::cout << "Pertubed Cameras" << std::endl;
+		std::cout << "Perturb Cameras" << std::endl;
 		for (int i = 0; i < perturbed_cameras.size();i++)
 		{
 			auto p = perturbed_cameras[i];
@@ -167,11 +174,104 @@ int main(int argc, char** argv)
 	}
 	*/
 
-	int numOfIteration = 3;
-
-	/*
-	// Adjust Cameras
 	int numOfIteration = 6;
+
+	// adjust camera and points at the same time
+	for (int iteration = 0; iteration < numOfIteration; iteration++)
+	{
+		std::cout << std::endl;
+		std::cout << "Iteration: " << iteration << std::endl;
+		// randomly adjust camera one by one
+		// use finite difference to estimate Jacobian
+		// parameter space dimemsion: 2*m+2*n
+		// output space dimenstion: m*n
+		int m = perturbed_cameras.size();
+		int n = perturbedPoints.size();
+		Eigen::MatrixXf J(m*n, 2 * m + 2 * n);
+		Eigen::VectorXf E(m*n);
+		// fill in the row of Jacobian one by one
+		for (int i = 0; i < m; i++)
+		{
+			for (int j = 0; j < n; j++)
+			{
+				int row = i*n+j;
+
+				float pij0 = cameras[i].project(points[j]);
+				float pij = perturbed_cameras[i].project(perturbedPoints[j]);
+				Point P_dt1 = perturbedPoints[j]; P_dt1 += Translation(0.01f, 0.0f);
+				Point P_dt2 = perturbedPoints[j]; P_dt2 += Translation(0.0f, 0.01f);
+				Camera C_dt1 = Camera(perturbed_cameras[i].position); C_dt1.position += Translation(0.01f, 0.0f);
+				Camera C_dt2 = Camera(perturbed_cameras[i].position); C_dt2.position += Translation(0.0f, 0.01f);
+
+				E(row) = pij0 - pij;
+				std::cout << "E" << std::endl;
+				std::cout << E << std::endl;
+				J(row, 2 * j) = (perturbed_cameras[i].project(P_dt1)-pij)/0.01;
+				J(row, 2 * j + 1) = (perturbed_cameras[i].project(P_dt2) - pij) / 0.01;
+				J(row, 2 * n + 2 * i) = (C_dt1.project(perturbedPoints[j]) - pij) / 0.01;
+				J(row, 2 * n + 2 * i + 1) = (C_dt2.project(perturbedPoints[j]) - pij) / 0.01;
+			}
+		}
+		std::cout << "E" << std::endl;
+		std::cout << E << std::endl;
+
+		std::cout << "J" << std::endl;
+		std::cout << J << std::endl;
+
+		Eigen::VectorXf Dparameter(2*m+2*n);
+		Dparameter = (J.transpose()*J).inverse()*(J.transpose()*E);
+
+		std::cout << "Dp" << std::endl;
+		std::cout << Dparameter << std::endl;
+
+		for (int i = 0; i < perturbed_cameras.size(); i++)
+		{
+			// Construct Jacobian 
+			Eigen::MatrixXf J(photos[i].size(), 2);
+			Eigen::VectorXf E(photos[i].size());
+			// for each visible points, compute one line of J and E
+			int j = 0;
+			for (auto p : photos[i])
+			{
+				// error: U-U0
+				ProjectedPoint U0 = cameras[i].project(p);
+				ProjectedPoint U = perturbed_cameras[i].project(p);
+
+				// calculate dUdt1
+				Camera C_dt1 = Camera(perturbed_cameras[i].position);
+				C_dt1.position += Translation(0.01f, 0.0f);
+				float dU_t1 = C_dt1.project(p) - U;
+
+				// calculate dUdt2
+				Camera C_dt2 = Camera(perturbed_cameras[i].position);
+				C_dt2.position += Translation(0.0f, 0.01f);
+				float dU_t2 = C_dt2.project(p) - U;
+
+				E(j) = -(U - U0);// want to counter act against the difference
+				J(j, 0) = dU_t1 / 0.01;
+				J(j, 1) = dU_t2 / 0.01;
+				j++;
+			}
+
+			//std::cout << "E" << std::endl;
+			//std::cout << E << std::endl;
+
+			//std::cout << "J" << std::endl;
+			//std::cout << J << std::endl;
+
+			Translation t = (J.transpose()*J).inverse()*(J.transpose()*E);
+			//std::cout << "t:";
+			//std::cout << t.transpose() << std::endl;
+			std::cout << "(" << perturbed_cameras[i].position.transpose() << ") ---> ";
+			perturbed_cameras[i].position += t;
+			std::cout << "(" << perturbed_cameras[i].position.transpose() << ")";
+			std::cout << " | Real Position: (" << cameras[i].position.transpose() << ")" << std::endl;
+		}
+	}
+
+
+	
+	// Adjust Cameras
 	for (int iteration = 0; iteration < numOfIteration; iteration++)
 	{
 		std::cout << std::endl;
@@ -268,14 +368,14 @@ int main(int argc, char** argv)
 			Translation t = (J.transpose()*J).inverse()*(J.transpose()*E);
 			//std::cout << "t:";
 			//std::cout << t.transpose() << std::endl;
-			std::cout << "(" << perturbedPoints[i].transpose().format(shortFmt) << ") ---> ";
+			std::cout << "(" << perturbedPoints[i].transpose() << ") ---> ";
 			perturbedPoints[i] += t;
-			std::cout << "(" << perturbedPoints[i].transpose().format(shortFmt) << ")";
+			std::cout << "(" << perturbedPoints[i].transpose() << ")";
 			std::cout << " | Real Position: (" << points[i].transpose() << ")" << std::endl;
 		}
 	}
-	*/
-
+	
+	/*
 	// Adjust Points and Camera (There is no roation for point, since it is a single point)
 	for (int iteration = 0; iteration < numOfIteration; iteration++)
 	{
@@ -385,7 +485,7 @@ int main(int argc, char** argv)
 			}
 		}
 	}
-
+	*/
 
 	/*
 
