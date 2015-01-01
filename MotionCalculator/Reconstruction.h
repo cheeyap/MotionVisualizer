@@ -2,6 +2,8 @@
 #include <iostream>
 #include <Eigen/Geometry>
 
+#include <fstream>
+#include <sstream>
 #include <map>
 #include <vector>
 #include <algorithm>
@@ -10,6 +12,9 @@ typedef std::vector<std::vector<Eigen::Vector2f>> Trajectories;
 typedef std::vector<Eigen::Matrix3f> Rotations;
 typedef std::vector<Eigen::Vector3f> Translations;
 typedef std::vector<float> PointsInverseDepths;
+
+typedef std::vector<float> X;
+typedef std::vector<float> Y;
 
 struct Parameter // parameter to be estimated in optimizer
 {
@@ -26,6 +31,9 @@ public:
 	Reconstruction();
 	~Reconstruction();
 
+	//-----------//
+	// properties//
+	//-----------//
 	int N; // frame Number not including the reference frame
 	int M; // Number of tracked points
 	float f; // focal length
@@ -36,15 +44,17 @@ public:
 	Translations T; // usage T[i]
 
 	PointsInverseDepths w; // usage w[j]
-	float x;// x, y location in reference frame, normalized
-	float y;// x, y location in reference frame, normalized
+	X x;// x, y location in reference frame, normalized, usage x[j]
+	Y y;// x, y location in reference frame, normalized, usage y[j]
 
-	//APIs
+	//-----------//
+	//APIs       //
+	//-----------//
 	// initialize p,R,T
 	void init();
 	
 	// Fill in p, x and y, make sure to normalize it!!!!!(image space, local camera space), minues frame center and divide by f
-	void readLKTrajectories(std::string file);
+	void readLKTrajectories(std::string path);
 	
 	// Fill in R,T with identity matrix, R = I, T = 0;
 	void initMotion();
@@ -52,6 +62,9 @@ public:
 	// Fill in w with random numbers (suggested by the paper)
 	void initStructure();
 	
+	// normalize image
+
+
 	// evaluate distance to target pij,
 	// - return a N*M vector, each element is D(wj,Ri,Tj) - pij
 	Trajectories D(Parameter para, Trajectories p);
