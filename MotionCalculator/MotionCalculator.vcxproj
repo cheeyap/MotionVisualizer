@@ -67,12 +67,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Motion3D.cpp" />
     <ClCompile Include="MotionCalculator.cpp" />
     <ClCompile Include="Reconstruction.cpp" />
+    <ClCompile Include="scene.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Motion3D.h" />
     <ClInclude Include="MotionCalculator.h" />
     <ClInclude Include="Reconstruction.h" />
+    <ClInclude Include="scene.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

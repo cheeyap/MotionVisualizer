@@ -1,4 +1,5 @@
 // import procedure node
+#pragma once
 #include <iostream>
 // import external Obj/procedure Node
 #include <Eigen/Geometry>

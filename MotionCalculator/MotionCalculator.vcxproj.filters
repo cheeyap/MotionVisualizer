@@ -24,6 +24,12 @@
     <ClCompile Include="Reconstruction.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Motion3D.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="scene.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MotionCalculator.h">
@@ -31,6 +37,12 @@
     </ClInclude>
     <ClInclude Include="Reconstruction.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Motion3D.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scene.h">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
